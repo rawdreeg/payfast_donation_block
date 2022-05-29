@@ -1,0 +1,4 @@
+administer payfast_donation_block configuration:
+  title: 'Administer payfast_donation_block configuration'
+  description: 'Optional description.'
+  restrict access: true

@@ -1,0 +1,6 @@
+payfast_donation_block.settings_form:
+  title: Payfast Donation Block
+  description: Configure Payfast Donation Block.
+  parent: system.admin_config_system
+  route_name: payfast_donation_block.settings_form
+  weight: 10

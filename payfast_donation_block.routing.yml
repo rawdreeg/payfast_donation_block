@@ -1,0 +1,7 @@
+payfast_donation_block.settings_form:
+  path: '/admin/config/system/payfast-donation-block'
+  defaults:
+    _title: 'Payfast Donation Block settings'
+    _form: 'Drupal\payfast_donation_block\Form\SettingsForm'
+  requirements:
+    _permission: 'administer payfast_donation_block configuration'
