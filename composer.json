@@ -1,0 +1,19 @@
+{
+    "name": "drupal/payfast_donation_block",
+    "description": "Accept donations on your drupal site with payfast.",
+    "minimum-stability": "stable",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "rawdreeg",
+            "email": "rawdreeg@gmail.com"
+        }
+    ],
+    "require": {
+        "drupal/core": "^8.8 || ^9"
+    },
+    "require-dev": {
+        "payfast/payfast-php-sdk": "dev-master"
+    }
+}
