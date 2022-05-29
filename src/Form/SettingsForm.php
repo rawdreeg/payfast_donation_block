@@ -35,8 +35,24 @@ class SettingsForm extends ConfigFormBase {
       '#collapsible' => TRUE,
       // Open by default.
       '#collapsed' => FALSE,
-      // Place this group in the vertical tabs bar.
-      '#group' => 'verticaltabs',
+    ];
+
+    $form['payfast_settings']['return_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Payment successful return URL'),
+      '#default_value' => $this->config('payfast_donation_block.settings')->get('return_url'),
+    ];
+
+    $form['payfast_settings']['cancel_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Payment failed (canceled) return URL'),
+      '#default_value' => $this->config('payfast_donation_block.settings')->get('cancel_url'),
+    ];
+
+    $form['payfast_settings']['notify_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('The URL which is used by PayFast to post the Instant Transaction Notifications (ITNs) for a transaction.'),
+      '#default_value' => $this->config('payfast_donation_block.settings')->get('notify_url'),
     ];
 
     $form['payfast_settings']['merchant_id'] = [
@@ -78,6 +94,9 @@ class SettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config('payfast_donation_block.settings')
+      ->set('return_url', $form_state->getValue('return_url'))
+      ->set('cancel_url', $form_state->getValue('cancel_url'))
+      ->set('notify_url', $form_state->getValue('notify_url'))
       ->set('base_url', $form_state->getValue('base_url'))
       ->set('username', $form_state->getValue('username'))
       ->set('password', $form_state->getValue('password'))
