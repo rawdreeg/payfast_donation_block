@@ -29,30 +29,25 @@ class SettingsForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['payfast_settings'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Payfast Settings'),
-      // Show collapse icon.
-      '#collapsible' => TRUE,
-      // Open by default.
-      '#collapsed' => FALSE,
+      '#type' => 'fieldset',
+      '#title' => $this->t('API Settings'),
     ];
 
-    $form['payfast_settings']['return_url'] = [
+    $form['other_settings'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Other Settings'),
+    ];
+
+    $form['other_settings']['return_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Payment successful return URL'),
       '#default_value' => $this->config('payfast_donation_block.settings')->get('return_url'),
     ];
 
-    $form['payfast_settings']['cancel_url'] = [
+    $form['other_settings']['cancel_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Payment failed (canceled) return URL'),
       '#default_value' => $this->config('payfast_donation_block.settings')->get('cancel_url'),
-    ];
-
-    $form['payfast_settings']['notify_url'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('The URL which is used by PayFast to post the Instant Transaction Notifications (ITNs) for a transaction.'),
-      '#default_value' => $this->config('payfast_donation_block.settings')->get('notify_url'),
     ];
 
     $form['payfast_settings']['merchant_id'] = [
@@ -74,16 +69,27 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('payfast_donation_block.settings')->get('pass_phase'),
     ];
 
+    $form['payfast_settings']['onsite_payment'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use onsite payment form ?'),
+      '#default_value' => $this->config('payfast_donation_block.settings')->get('onsite_payment'),
+    ];
+
     $form['payfast_settings']['test_mode'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Test Mode?'),
       '#default_value' => $this->config('payfast_donation_block.settings')->get('test_mode'),
+      '#states' => [
+        'visible' => [
+          ':input[name="onsite_payment"]' => ['checked' => FALSE],
+        ]
+      ]
     ];
 
-    $form['payfast_settings']['onsite_payment'] = [
+    $form['save_donation'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Onsite payment modal?'),
-      '#default_value' => $this->config('payfast_donation_block.settings')->get('onsite_payment'),
+      '#title' => $this->t('Would like like to save donation records on this site?'),
+      '#default_value' => $this->config('payfast_donation_block.settings')->get('save_donation'),
     ];
 
     return parent::buildForm($form, $form_state);
@@ -96,8 +102,6 @@ class SettingsForm extends ConfigFormBase {
     $this->config('payfast_donation_block.settings')
       ->set('return_url', $form_state->getValue('return_url'))
       ->set('cancel_url', $form_state->getValue('cancel_url'))
-      ->set('notify_url', $form_state->getValue('notify_url'))
-      ->set('base_url', $form_state->getValue('base_url'))
       ->set('username', $form_state->getValue('username'))
       ->set('password', $form_state->getValue('password'))
       ->set('merchant_id', $form_state->getValue('merchant_id'))
@@ -105,6 +109,7 @@ class SettingsForm extends ConfigFormBase {
       ->set('pass_phase', $form_state->getValue('pass_phase'))
       ->set('test_mode', $form_state->getValue('test_mode'))
       ->set('onsite_payment', $form_state->getValue('onsite_payment'))
+      ->set('save_donation', $form_state->getValue('save_donation'))
       ->save();
     parent::submitForm($form, $form_state);
   }

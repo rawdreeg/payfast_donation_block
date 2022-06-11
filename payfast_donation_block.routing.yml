@@ -5,3 +5,11 @@ payfast_donation_block.settings_form:
     _form: 'Drupal\payfast_donation_block\Form\SettingsForm'
   requirements:
     _permission: 'administer payfast_donation_block configuration'
+
+payfast_donation_block.form:
+  path: '/pdb/donate'
+  defaults:
+    _title: 'Donate'
+    _form: 'Drupal\payfast_donation_block\Form\PayFastDonationBlockForm'
+  requirements:
+    _permission: 'access content'
