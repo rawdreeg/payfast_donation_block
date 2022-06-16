@@ -3,7 +3,7 @@ payfast_library:
     'https://www.payfast.co.za/onsite/engine.js': {external: true}
 payfast_donation_block:
   js:
-    js/payfast-donation-block.js: {}
+    'js/payfast-donation-block.js': {}
   css:
     component:
       css/payfast-donation-block.css: {}

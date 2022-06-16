@@ -4,10 +4,9 @@ namespace Drupal\payfast_donation_block\Form;
 
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
-use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use GuzzleHttp\Exception\ClientException;
 use PayFast\Auth;
 use PayFast\PayFastPayment;
 
@@ -45,9 +44,15 @@ class PayFastDonationBlockForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['full_name'] = [
+    $form['first_name'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Full name'),
+      '#title' => $this->t('First name'),
+      '#required' => FALSE,
+    ];
+
+    $form['last_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Last name'),
       '#required' => FALSE,
     ];
 
@@ -74,13 +79,24 @@ class PayFastDonationBlockForm extends FormBase {
 
     $form['#attached']['library'][] = 'payfast_donation_block/payfast_library';
 
-    $form['actions'] = [
-      '#type' => 'button',
-      '#value' => $this->t('Donate!'),
-      '#ajax' => [
-        'callback' => '::triggerPayment',
-      ],
-    ];
+    if ( $this->payfast_donation_block_config->get('onsite_payment') ) {
+      $form['actions'] = [
+        '#type' => 'button',
+        '#value' => $this->t('Donate!'),
+        '#ajax' => [
+          'callback' => '::triggerPayment',
+        ],
+      ];
+    } else {
+      $form['actions']['submit'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Donate!'),
+        '#ajax' => [
+          'callback' => '::initPayfastPaymentForm',
+        ]
+      ];
+      $form['#attached']['library'][] = 'payfast_donation_block/payfast_donation_block';
+    }
 
     $form['message'] = [
       '#type' => 'markup',
@@ -97,6 +113,52 @@ class PayFastDonationBlockForm extends FormBase {
 
     $response = new AjaxResponse();
 
+    $data = $this->preparePayfastData($form_state);
+
+    $payfast_data = $this->initOnsitePayment($data);
+
+    $response->addCommand(
+      new HtmlCommand(
+        '#payfast_do_onsite_payment',
+        $payfast_data
+      ));
+
+    return $response;
+
+  }
+
+  private function initOnsitePayment($data) {
+    try {
+
+      // Generate payment identifier
+      $identifier = $this->payfast_client->onsite->generatePaymentIdentifier($data);
+
+      if( $identifier !== null ){
+
+        $payfast_modal = '<script type="text/javascript">window.payfast_do_onsite_payment({"uuid":"'.$identifier.'"});</script>';
+
+      }
+    }catch (\Exception $e) {
+
+      $payfast_modal = $this->t('Error loading the payment form.');
+
+    }
+
+    return $payfast_modal;
+
+  }
+
+  public function initPayfastPaymentForm ( array &$form, FormStateInterface $form_state ) {
+    $data = $this->preparePayfastData($form_state);
+    $data['action_url'] = $this->payfast_client::$baseUrl . '/eng/process';
+
+    $response = new AjaxResponse();
+    $response->addCommand(new InvokeCommand(NULL, 'processPayfastPaymentForm', [ $data ]));
+
+    return $response;
+  }
+
+  private function preparePayfastData ( FormStateInterface $form_state ) {
     if (!$this->payfast_donation_block_config) {
       $this->payfast_donation_block_config =  $this->config('payfast_donation_block.settings');
     }
@@ -120,6 +182,14 @@ class PayFastDonationBlockForm extends FormBase {
       ])->render()
     ];
 
+    if (!empty($form_state->getValue('first_name'))) {
+      $data['first_name'] = $form_state->getValue('first_name');
+    }
+
+    if (!empty($form_state->getValue('last_name'))) {
+      $data['last_name'] = $form_state->getValue('last_name');
+    }
+
     $data['amount'] = number_format( sprintf( '%.2f', $data['amount'] ), 2, '.', '' );
     $data = ['merchant_id' => PayFastPayment::$merchantId, 'merchant_key' => PayFastPayment::$merchantKey] + $data;
 
@@ -134,47 +204,7 @@ class PayFastDonationBlockForm extends FormBase {
     $signature = Auth::generateSignature($data, $this->payfast_client::$passPhrase);
     $data['signature'] = $signature;
 
-    $payfast_data = $this->initOnsitePayment($data);
-
-
-    $response->addCommand(
-      new HtmlCommand(
-        '#payfast_do_onsite_payment',
-        $payfast_data
-      ));
-
-    return $response;
-
-  }
-
-  private function initOnsitePayment($data) {
-    try {
-      // Generate payment identifier
-      $identifier = $this->payfast_client->onsite->generatePaymentIdentifier($data);
-
-      if( $identifier !== null ){
-
-        $payfast_modal = '<script type="text/javascript">window.payfast_do_onsite_payment({"uuid":"'.$identifier.'"});</script>';
-
-      }
-    }catch (\Exception $e) {
-
-      $payfast_modal = $this->t('Error loading the payment form.');
-
-    }
-
-    return $payfast_modal;
-
-  }
-
-  private function initPayfastPaymentForm ( $data) {
-
-    $response = \Drupal::httpClient()->post($this->payfast_client::$baseUrl . '/eng/process', [
-      'form_params' => $data,
-      'headers' => [
-        'Content-type' => 'application/x-www-form-urlencoded',
-      ],
-    ]);
+    return $data;
   }
 
   public function submitForm(array &$form, FormStateInterface $form_state)

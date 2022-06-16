@@ -19,10 +19,8 @@ class PayFastDonationBlock extends BlockBase {
    * {@inheritdoc}
    */
   public function build() {
-    $build['content'] = [
-      '#markup' => $this->t('It works!'),
-    ];
-    return $build;
+    $form = \Drupal::formBuilder()->getForm('Drupal\payfast_donation_block\Form\PayFastDonationBlockForm');
+    return $form;
   }
 
 }
