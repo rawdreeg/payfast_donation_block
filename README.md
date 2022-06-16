@@ -51,8 +51,8 @@ CONFIGURATION
 TO-DO
 ------------
 
-[x] Payment form
-[x] Onsite payment mode
-[x] External payment mode
-[] Handle itn route.
-[] Log payment.
+- [x] Payment form
+- [x] Onsite payment mode
+- [x] External payment mode
+- [ ] Handle itn route.
+- [ ] Log payment.
