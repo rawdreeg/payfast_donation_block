@@ -4,7 +4,9 @@
       $.fn.processPayfastPaymentForm = function (data) {
         var form = '';
         $.each( data, function( key, value ) {
-          if (key === 'action_url')
+          if (key === 'action_url'){
+            continue;
+          }
           value = value.split('"').join('\"')
           form += '<input type="hidden" name="'+key+'" value="'+value+'">';
         });
