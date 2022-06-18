@@ -1,0 +1,18 @@
+entity.payfast_donations.view:
+  title: View
+  route_name: entity.payfast_donations.canonical
+  base_route: entity.payfast_donations.canonical
+entity.payfast_donations.edit_form:
+  title: Edit
+  route_name: entity.payfast_donations.edit_form
+  base_route: entity.payfast_donations.canonical
+entity.payfast_donations.delete_form:
+  title: Delete
+  route_name: entity.payfast_donations.delete_form
+  base_route: entity.payfast_donations.canonical
+  weight: 10
+entity.payfast_donations.collection:
+  title: Payfast Donations
+  route_name: entity.payfast_donations.collection
+  base_route: system.admin_content
+  weight: 10

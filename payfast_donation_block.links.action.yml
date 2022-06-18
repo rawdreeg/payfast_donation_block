@@ -1,0 +1,5 @@
+payfast_donations.add_form:
+  route_name: entity.payfast_donations.add_form
+  title: 'Add payfast donations'
+  appears_on:
+    - entity.payfast_donations.collection
