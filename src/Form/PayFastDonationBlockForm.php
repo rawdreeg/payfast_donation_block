@@ -9,18 +9,24 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use PayFast\Auth;
 use PayFast\PayFastPayment;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Provides a Payfast Donation Block form.
  */
 class PayFastDonationBlockForm extends FormBase {
+  /** @var \Drupal\Core\Config\ImmutableConfig $payfast_donation_block_config */
   private $payfast_donation_block_config;
+  /** @var PayFastPayment $payfast_client*/
   private $payfast_client;
+  /** @var \Symfony\Component\HttpFoundation\Request|null $request */
+  private $request;
 
   /**
    * Constructor
    */
-  public function __construct() {
+  public function __construct(RequestStack $request_stack) {
     $this->payfast_donation_block_config = $this->config('payfast_donation_block.settings');
     $this->payfast_client = new PayFastPayment(
       [
@@ -30,7 +36,18 @@ class PayFastDonationBlockForm extends FormBase {
         'testMode' => (bool) $this->payfast_donation_block_config->get('test_mode'),
       ]
     );
+    $this->request = $request_stack->getCurrentRequest();
+
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('request_stack')
+    );
+}
 
 
   /**
@@ -106,8 +123,12 @@ class PayFastDonationBlockForm extends FormBase {
     return $form;
   }
 
+
   /**
-   * {@inheritdoc}
+   * @param array $form
+   * @param FormStateInterface $form_state
+   * @return AjaxResponse
+   * @throws \PayFast\Exceptions\InvalidRequestException
    */
   public function triggerPayment(array &$form, FormStateInterface $form_state) {
 
@@ -127,6 +148,10 @@ class PayFastDonationBlockForm extends FormBase {
 
   }
 
+  /**
+   * @param $data
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup|string
+   */
   private function initOnsitePayment($data) {
     try {
 
@@ -148,6 +173,12 @@ class PayFastDonationBlockForm extends FormBase {
 
   }
 
+  /**
+   * @param array $form
+   * @param FormStateInterface $form_state
+   * @return AjaxResponse
+   * @throws \PayFast\Exceptions\InvalidRequestException
+   */
   public function initPayfastPaymentForm ( array &$form, FormStateInterface $form_state ) {
     $data = $this->preparePayfastData($form_state);
     $data['action_url'] = $this->payfast_client::$baseUrl . '/eng/process';
@@ -158,6 +189,11 @@ class PayFastDonationBlockForm extends FormBase {
     return $response;
   }
 
+  /**
+   * @param FormStateInterface $form_state
+   * @return array
+   * @throws \PayFast\Exceptions\InvalidRequestException
+   */
   private function preparePayfastData ( FormStateInterface $form_state ) {
     if (!$this->payfast_donation_block_config) {
       $this->payfast_donation_block_config =  $this->config('payfast_donation_block.settings');
@@ -193,13 +229,11 @@ class PayFastDonationBlockForm extends FormBase {
     $data['amount'] = number_format( sprintf( '%.2f', $data['amount'] ), 2, '.', '' );
     $data = ['merchant_id' => PayFastPayment::$merchantId, 'merchant_key' => PayFastPayment::$merchantKey] + $data;
 
-    if ( !empty($this->payfast_donation_block_config->get('return_url')) ) {
-      $data['return_url'] = $this->payfast_donation_block_config->get('return_url');
-    }
+    $data['return_url'] = !empty($this->payfast_donation_block_config->get('return_url'))
+      ? $this->payfast_donation_block_config->get('return_url') . '?payment_successful' : $this->request->getSchemeAndHttpHost() . '?payment_successful';
 
-    if ( !empty($this->payfast_donation_block_config->get('cancel_url')) ) {
-      $data['cancel_url'] = $this->payfast_donation_block_config->get('cancel_url');
-    }
+    $data['cancel_url'] = !empty($this->payfast_donation_block_config->get('cancel_url'))
+      ? $this->payfast_donation_block_config->get('cancel_url') . '?payment_failed' : $this->request->getSchemeAndHttpHost() . '?payment_failed';
 
     $signature = Auth::generateSignature($data, $this->payfast_client::$passPhrase);
     $data['signature'] = $signature;
