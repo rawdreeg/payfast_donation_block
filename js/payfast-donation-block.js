@@ -5,7 +5,7 @@
         var form = '';
         $.each( data, function( key, value ) {
           if (key === 'action_url'){
-            continue;
+            return true;
           }
           value = value.split('"').join('\"')
           form += '<input type="hidden" name="'+key+'" value="'+value+'">';
