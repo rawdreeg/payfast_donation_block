@@ -13,3 +13,11 @@ payfast_donation_block.form:
     _form: 'Drupal\payfast_donation_block\Form\PayFastDonationBlockForm'
   requirements:
     _permission: 'access content'
+
+payfast_donation_block.confirm:
+  path: '/pdb/confirm'
+  defaults:
+    _title: 'Donate'
+    _controller: '\Drupal\payfast_donation_block\Controller\PayfastDonationBlockController::confirmPayment'
+  requirements:
+    _permission: 'access content'
