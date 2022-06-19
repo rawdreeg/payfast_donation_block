@@ -87,7 +87,7 @@ class SettingsForm extends ConfigFormBase {
 
     $form['save_donation'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Would like like to save donation records on this site?'),
+      '#title' => $this->t('Would you like to save donation records on this site?'),
       '#default_value' => $this->config('payfast_donation_block.settings')->get('save_donation'),
     ];
 
