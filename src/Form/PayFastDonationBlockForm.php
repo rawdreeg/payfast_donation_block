@@ -71,6 +71,11 @@ class PayFastDonationBlockForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+
+    if (!$this->payfastDonationBlockConfig) {
+      $this->payfastDonationBlockConfig = $this->config('payfast_donation_block.settings');
+    }
+
     $form['first_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('First name'),
@@ -180,9 +185,16 @@ class PayFastDonationBlockForm extends FormBase {
       $identifier = $this->payfastClient->onsite->generatePaymentIdentifier($data);
 
       if ($identifier !== NULL) {
-
-        $payfast_modal = '<script type="text/javascript">window.payfast_do_onsite_payment({"uuid":"' . $identifier . '"});</script>';
-
+        $notify_url = $data['notify_url'] ?? $data['return_url'];
+        $payfast_modal = <<<EOF
+<script type="text/javascript">window.payfast_do_onsite_payment({
+            "uuid":"$identifier",
+            "return_url":"{$data['return_url']}",
+            "cancel_url":"{$data['cancel_url']}",
+            "notify_url":"{$notify_url}"
+        });
+</script>
+EOF;
       }
     }
     catch (\Exception $e) {
@@ -304,7 +316,6 @@ class PayFastDonationBlockForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // @todo Implement submitForm() method.
   }
 
 }
