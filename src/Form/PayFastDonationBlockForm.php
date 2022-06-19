@@ -7,6 +7,8 @@ use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\payfast_donation_block\Entity\PayfastDonations;
 use PayFast\Auth;
 use PayFast\PayFastPayment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -230,10 +232,29 @@ class PayFastDonationBlockForm extends FormBase {
     $data = ['merchant_id' => PayFastPayment::$merchantId, 'merchant_key' => PayFastPayment::$merchantKey] + $data;
 
     $data['return_url'] = !empty($this->payfast_donation_block_config->get('return_url'))
-      ? $this->payfast_donation_block_config->get('return_url') . '?payment_successful' : $this->request->getSchemeAndHttpHost() . '?payment_successful';
+      ? $this->payfast_donation_block_config->get('return_url') . '?payment_status=success' : $this->request->getSchemeAndHttpHost() . '?payment_status=success';
 
     $data['cancel_url'] = !empty($this->payfast_donation_block_config->get('cancel_url'))
-      ? $this->payfast_donation_block_config->get('cancel_url') . '?payment_failed' : $this->request->getSchemeAndHttpHost() . '?payment_failed';
+      ? $this->payfast_donation_block_config->get('cancel_url') . '?payment_status=failed' : $this->request->getSchemeAndHttpHost() . '?payment_status=failed';
+
+    if ($this->payfast_donation_block_config->get('save_donation')) {
+      // Add the the itn notify route
+      $data['notify_url'] = Url::fromRoute('payfast_donation_block.confirm', [] ,[ 'absolute' => TRUE ])->toString();
+      // Log the payment.
+      /** @var PayfastDonations $saved_donation */
+      $saved_donation = PayfastDonations::create(
+          [
+            'title' => $data['item_name'],
+            'first_name' =>  $form_state->getValue('first_name'),
+            'last_name' =>  $form_state->getValue('last_name'),
+            'email' => $data['email_address'],
+            'donation_amount' => $data['amount'],
+            'payment_status' => 'pending',
+          ]
+      );
+      $saved_donation->save();
+      $data['custom_str1'] = $saved_donation->id();
+    }
 
     $signature = Auth::generateSignature($data, $this->payfast_client::$passPhrase);
     $data['signature'] = $signature;

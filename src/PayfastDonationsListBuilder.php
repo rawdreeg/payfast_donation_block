@@ -70,7 +70,7 @@ class PayfastDonationsListBuilder extends EntityListBuilder {
       ->count()
       ->execute();
 
-    $build['summary']['#markup'] = $this->t('Total payfast donationses: @total', ['@total' => $total]);
+    $build['summary']['#markup'] = $this->t('Total payfast donations: @total', ['@total' => $total]);
     return $build;
   }
 
@@ -96,11 +96,11 @@ class PayfastDonationsListBuilder extends EntityListBuilder {
     /* @var $entity \Drupal\payfast_donation_block\PayfastDonationsInterface */
     $row['id'] = $entity->id();
     $row['title'] = $entity->toLink();
-    $row['first_name'] = $entity->get('first_name')->getValue();
-    $row['last_name'] = $entity->get('last_name')->getValue();
-    $row['email'] = $entity->get('email')->getValue();
-    $row['donation_amount'] = $entity->get('donation_amount')->getValue();
-    $row['payment_status'] = $entity->get('payment_status')->getValue();
+    $row['first_name'] = $entity->get('first_name')->value;
+    $row['last_name'] = $entity->get('last_name')->value;
+    $row['email'] = $entity->get('email')->value;
+    $row['donation_amount'] = $entity->get('donation_amount')->value;
+    $row['payment_status'] = $entity->get('payment_status')->value;
     $row['created'] = $this->dateFormatter->format($entity->getCreatedTime());
     return $row + parent::buildRow($entity);
   }

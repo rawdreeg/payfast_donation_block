@@ -14,7 +14,7 @@ use Drupal\payfast_donation_block\PayfastDonationsInterface;
  * @ContentEntityType(
  *   id = "payfast_donations",
  *   label = @Translation("Payfast Donations"),
- *   label_collection = @Translation("Payfast Donationses"),
+ *   label_collection = @Translation("Payfast Donations"),
  *   handlers = {
  *     "view_builder" = "Drupal\payfast_donation_block\PayfastDonationsViewBuilder",
  *     "list_builder" = "Drupal\payfast_donation_block\PayfastDonationsListBuilder",
