@@ -11,7 +11,6 @@ use Drupal\Core\State\State;
 use PayFast\Auth;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
-use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
@@ -23,45 +22,58 @@ class PayfastDonationBlockSubscriber implements EventSubscriberInterface {
   /**
    * The logger service.
    *
-   * @var LoggerChannelFactoryInterface
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
    */
   protected $logger;
 
   /**
    * The state service.
-   * @var State
+   *
+   * @var \Drupal\Core\State\State
    */
   private $state;
 
   /**
    * Current route match.
-   * @var RouteMatchInterface
+   *
+   * @var \Drupal\Core\Routing\RouteMatchInterface
    */
-  private $route_match;
+  private $routeMatch;
 
   /**
    * Config factory service.
-   * @var ConfigFactoryInterface
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   private $configFactory;
 
   /**
+   * The Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  private $messenger;
+
+  /**
    * Constructs event subscriber.
    *
-   * @param LoggerChannelFactoryInterface $logger
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger
    *   The logger service.
-   * @param State $state
+   * @param \Drupal\Core\State\State $state
    *   The state service.
-   * @param RouteMatchInterface $route_match
+   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
    *   The route match interface.
-   * @param ConfigFactoryInterface $configFactory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    */
-  public function __construct(LoggerChannelFactoryInterface $logger, State $state, RouteMatchInterface $route_match, ConfigFactoryInterface $configFactory) {
+  public function __construct(LoggerChannelFactoryInterface $logger, State $state, RouteMatchInterface $route_match, ConfigFactoryInterface $configFactory, MessengerInterface $messenger) {
     $this->logger = $logger;
     $this->state = $state;
-    $this->route_match = $route_match;
+    $this->routeMatch = $route_match;
     $this->configFactory = $configFactory;
+    $this->messenger = $messenger;
   }
 
   /**
@@ -89,17 +101,17 @@ class PayfastDonationBlockSubscriber implements EventSubscriberInterface {
       return;
     }
 
-    if ($this->route_match->getRouteName() === 'payfast_donation_block.confirm') {
-      // validate request
+    if ($this->routeMatch->getRouteName() === 'payfast_donation_block.confirm') {
+      // Validate request.
       $request_data = $event->getRequest()->request->all();
       $payfast_donation_block_config = $this->configFactory
         ->get('payfast_donation_block.settings');
 
-      if ( empty($request_data)) {
+      if (empty($request_data)) {
         throw new AccessDeniedHttpException();
       }
-      // Validate signature
-      if (! $request_data['signature'] ===  Auth::generateApiSignature($request_data, $payfast_donation_block_config->get('pass_phase')) ) {
+      // Validate signature.
+      if (!$request_data['signature'] === Auth::generateApiSignature($request_data, $payfast_donation_block_config->get('pass_phase'))) {
         $this->logger->get('payfast_donation_block')->debug('Could not verify signature', $request_data);
         throw new AccessDeniedHttpException();
       }
@@ -107,7 +119,6 @@ class PayfastDonationBlockSubscriber implements EventSubscriberInterface {
     }
 
   }
-
 
   /**
    * {@inheritdoc}

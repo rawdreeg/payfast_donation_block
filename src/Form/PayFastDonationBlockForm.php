@@ -18,24 +18,33 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * Provides a Payfast Donation Block form.
  */
 class PayFastDonationBlockForm extends FormBase {
-  /** @var \Drupal\Core\Config\ImmutableConfig $payfast_donation_block_config */
-  private $payfast_donation_block_config;
-  /** @var PayFastPayment $payfast_client*/
-  private $payfast_client;
-  /** @var \Symfony\Component\HttpFoundation\Request|null $request */
+  /**
+   * Donation config.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig*/
+  private $payfastDonationBlockConfig;
+  /**
+   * Payfast client.
+   *
+   * @var \PayFast\PayFastPayment*/
+  private $payfastClient;
+  /**
+   * Request service.
+   *
+   * @var \Symfony\Component\HttpFoundation\Request|null*/
   private $request;
 
   /**
-   * Constructor
+   * Constructor.
    */
   public function __construct(RequestStack $request_stack) {
-    $this->payfast_donation_block_config = $this->config('payfast_donation_block.settings');
-    $this->payfast_client = new PayFastPayment(
+    $this->payfastDonationBlockConfig = $this->config('payfast_donation_block.settings');
+    $this->payfastClient = new PayFastPayment(
       [
-        'merchantId' => $this->payfast_donation_block_config->get('merchant_id'),
-        'merchantKey' => $this->payfast_donation_block_config->get('merchant_key'),
-        'passPhrase' => $this->payfast_donation_block_config->get('pass_phase'),
-        'testMode' => (bool) $this->payfast_donation_block_config->get('test_mode'),
+        'merchantId' => $this->payfastDonationBlockConfig->get('merchant_id'),
+        'merchantKey' => $this->payfastDonationBlockConfig->get('merchant_key'),
+        'passPhrase' => $this->payfastDonationBlockConfig->get('pass_phase'),
+        'testMode' => (bool) $this->payfastDonationBlockConfig->get('test_mode'),
       ]
     );
     $this->request = $request_stack->getCurrentRequest();
@@ -49,8 +58,7 @@ class PayFastDonationBlockForm extends FormBase {
     return new static(
       $container->get('request_stack')
     );
-}
-
+  }
 
   /**
    * {@inheritdoc}
@@ -75,7 +83,6 @@ class PayFastDonationBlockForm extends FormBase {
       '#required' => FALSE,
     ];
 
-
     $form['email_address'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Email address'),
@@ -92,13 +99,13 @@ class PayFastDonationBlockForm extends FormBase {
     $form['item_name'] = [
       '#type' => 'hidden',
       '#value' => $this->t('Donation on @sitename', [
-        '@username' => $this->config('system.site')->get('name')
+        '@username' => $this->config('system.site')->get('name'),
       ]),
     ];
 
     $form['#attached']['library'][] = 'payfast_donation_block/payfast_library';
 
-    if ( $this->payfast_donation_block_config->get('onsite_payment') ) {
+    if ($this->payfastDonationBlockConfig->get('onsite_payment')) {
       $form['actions'] = [
         '#type' => 'button',
         '#value' => $this->t('Donate!'),
@@ -106,30 +113,37 @@ class PayFastDonationBlockForm extends FormBase {
           'callback' => '::triggerPayment',
         ],
       ];
-    } else {
+    }
+    else {
       $form['actions']['submit'] = [
         '#type' => 'submit',
         '#value' => $this->t('Donate!'),
         '#ajax' => [
           'callback' => '::initPayfastPaymentForm',
-        ]
+        ],
       ];
       $form['#attached']['library'][] = 'payfast_donation_block/payfast_donation_block';
     }
 
     $form['message'] = [
       '#type' => 'markup',
-      '#markup' => '<div id="payfast_do_onsite_payment"></div>'
+      '#markup' => '<div id="payfast_do_onsite_payment"></div>',
     ];
 
     return $form;
   }
 
-
   /**
+   * Triggers the payment modal.
+   *
    * @param array $form
-   * @param FormStateInterface $form_state
-   * @return AjaxResponse
+   *   - Form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   - Form state object.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   - Ajax response with onsite trigger script.
+   *
    * @throws \PayFast\Exceptions\InvalidRequestException
    */
   public function triggerPayment(array &$form, FormStateInterface $form_state) {
@@ -151,21 +165,27 @@ class PayFastDonationBlockForm extends FormBase {
   }
 
   /**
-   * @param $data
+   * Builds and return js init for modal.
+   *
+   * @param array $data
+   *   - Payfast data array.
+   *
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup|string
+   *   - The JS script or an error message.
    */
-  private function initOnsitePayment($data) {
+  private function initOnsitePayment(array $data) {
     try {
 
-      // Generate payment identifier
-      $identifier = $this->payfast_client->onsite->generatePaymentIdentifier($data);
+      // Generate payment identifier.
+      $identifier = $this->payfastClient->onsite->generatePaymentIdentifier($data);
 
-      if( $identifier !== null ){
+      if ($identifier !== NULL) {
 
-        $payfast_modal = '<script type="text/javascript">window.payfast_do_onsite_payment({"uuid":"'.$identifier.'"});</script>';
+        $payfast_modal = '<script type="text/javascript">window.payfast_do_onsite_payment({"uuid":"' . $identifier . '"});</script>';
 
       }
-    }catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
 
       $payfast_modal = $this->t('Error loading the payment form.');
 
@@ -176,38 +196,51 @@ class PayFastDonationBlockForm extends FormBase {
   }
 
   /**
+   * Generate and return payfast external form.
+   *
    * @param array $form
-   * @param FormStateInterface $form_state
-   * @return AjaxResponse
+   *   - Form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   - Form state object.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   - Returns the external payment HTML.
+   *
    * @throws \PayFast\Exceptions\InvalidRequestException
    */
-  public function initPayfastPaymentForm ( array &$form, FormStateInterface $form_state ) {
+  public function initPayfastPaymentForm(array &$form, FormStateInterface $form_state) {
     $data = $this->preparePayfastData($form_state);
-    $data['action_url'] = $this->payfast_client::$baseUrl . '/eng/process';
+    $data['action_url'] = $this->payfastClient::$baseUrl . '/eng/process';
 
     $response = new AjaxResponse();
-    $response->addCommand(new InvokeCommand(NULL, 'processPayfastPaymentForm', [ $data ]));
+    $response->addCommand(new InvokeCommand(NULL, 'processPayfastPaymentForm', [$data]));
 
     return $response;
   }
 
   /**
-   * @param FormStateInterface $form_state
+   * Prepared the payfast data.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   - Form state object.
+   *
    * @return array
+   *   - Returns the normalized data to submit to Payfast.
+   *
    * @throws \PayFast\Exceptions\InvalidRequestException
    */
-  private function preparePayfastData ( FormStateInterface $form_state ) {
-    if (!$this->payfast_donation_block_config) {
-      $this->payfast_donation_block_config =  $this->config('payfast_donation_block.settings');
+  private function preparePayfastData(FormStateInterface $form_state) {
+    if (!$this->payfastDonationBlockConfig) {
+      $this->payfastDonationBlockConfig = $this->config('payfast_donation_block.settings');
     }
 
-    if (!$this->payfast_client) {
-      $this->payfast_client = new PayFastPayment(
+    if (!$this->payfastClient) {
+      $this->payfastClient = new PayFastPayment(
         [
-          'merchantId' => $this->payfast_donation_block_config->get('merchant_id'),
-          'merchantKey' => $this->payfast_donation_block_config->get('merchant_key'),
-          'passPhrase' => $this->payfast_donation_block_config->get('pass_phase'),
-          'testMode' => (bool) $this->payfast_donation_block_config->get('test_mode'),
+          'merchantId' => $this->payfastDonationBlockConfig->get('merchant_id'),
+          'merchantKey' => $this->payfastDonationBlockConfig->get('merchant_key'),
+          'passPhrase' => $this->payfastDonationBlockConfig->get('pass_phase'),
+          'testMode' => (bool) $this->payfastDonationBlockConfig->get('test_mode'),
         ]
       );
     }
@@ -216,8 +249,8 @@ class PayFastDonationBlockForm extends FormBase {
       'amount' => (float) $form_state->getValue('amount'),
       'email_address' => $form_state->getValue('email_address'),
       'item_name' => $this->t('Donation on @sitename', [
-        '@sitename' => $this->config('system.site')->get('name')
-      ])->render()
+        '@sitename' => $this->config('system.site')->get('name'),
+      ])->render(),
     ];
 
     if (!empty($form_state->getValue('first_name'))) {
@@ -228,25 +261,30 @@ class PayFastDonationBlockForm extends FormBase {
       $data['last_name'] = $form_state->getValue('last_name');
     }
 
-    $data['amount'] = number_format( sprintf( '%.2f', $data['amount'] ), 2, '.', '' );
-    $data = ['merchant_id' => PayFastPayment::$merchantId, 'merchant_key' => PayFastPayment::$merchantKey] + $data;
+    $data['amount'] = number_format(sprintf('%.2f', $data['amount']), 2, '.', '');
+    $data = [
+      'merchant_id' => PayFastPayment::$merchantId,
+      'merchant_key' => PayFastPayment::$merchantKey,
+    ] + $data;
 
-    $data['return_url'] = !empty($this->payfast_donation_block_config->get('return_url'))
-      ? $this->payfast_donation_block_config->get('return_url') . '?payment_status=success' : $this->request->getSchemeAndHttpHost() . '?payment_status=success';
+    $data['return_url'] = !empty($this->payfastDonationBlockConfig->get('return_url'))
+      ? $this->payfastDonationBlockConfig->get('return_url') . '?payment_status=success'
+      : $this->request->getSchemeAndHttpHost() . '?payment_status=success';
 
-    $data['cancel_url'] = !empty($this->payfast_donation_block_config->get('cancel_url'))
-      ? $this->payfast_donation_block_config->get('cancel_url') . '?payment_status=failed' : $this->request->getSchemeAndHttpHost() . '?payment_status=failed';
+    $data['cancel_url'] = !empty($this->payfastDonationBlockConfig->get('cancel_url'))
+      ? $this->payfastDonationBlockConfig->get('cancel_url') . '?payment_status=failed'
+      : $this->request->getSchemeAndHttpHost() . '?payment_status=failed';
 
-    if ($this->payfast_donation_block_config->get('save_donation')) {
-      // Add the the itn notify route
-      $data['notify_url'] = Url::fromRoute('payfast_donation_block.confirm', [] ,[ 'absolute' => TRUE ])->toString();
+    if ($this->payfastDonationBlockConfig->get('save_donation')) {
+      // Add the the itn notify route.
+      $data['notify_url'] = Url::fromRoute('payfast_donation_block.confirm', [], ['absolute' => TRUE])->toString();
       // Log the payment.
-      /** @var PayfastDonations $saved_donation */
+      /** @var \Drupal\payfast_donation_block\Entity\PayfastDonations $saved_donation */
       $saved_donation = PayfastDonations::create(
           [
             'title' => $data['item_name'],
-            'first_name' =>  $form_state->getValue('first_name'),
-            'last_name' =>  $form_state->getValue('last_name'),
+            'first_name' => $form_state->getValue('first_name'),
+            'last_name' => $form_state->getValue('last_name'),
             'email' => $data['email_address'],
             'donation_amount' => $data['amount'],
             'payment_status' => 'pending',
@@ -256,15 +294,17 @@ class PayFastDonationBlockForm extends FormBase {
       $data['custom_str1'] = $saved_donation->id();
     }
 
-    $signature = Auth::generateSignature($data, $this->payfast_client::$passPhrase);
+    $signature = Auth::generateSignature($data, $this->payfastClient::$passPhrase);
     $data['signature'] = $signature;
 
     return $data;
   }
 
-  public function submitForm(array &$form, FormStateInterface $form_state)
-  {
-    // TODO: Implement submitForm() method.
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    // @todo Implement submitForm() method.
   }
 
 }

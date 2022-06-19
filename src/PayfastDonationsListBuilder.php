@@ -93,7 +93,7 @@ class PayfastDonationsListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
-    /* @var $entity \Drupal\payfast_donation_block\PayfastDonationsInterface */
+    /** @var \Drupal\payfast_donation_block\PayfastDonationsInterface $entity */
     $row['id'] = $entity->id();
     $row['title'] = $entity->toLink();
     $row['first_name'] = $entity->get('first_name')->value;

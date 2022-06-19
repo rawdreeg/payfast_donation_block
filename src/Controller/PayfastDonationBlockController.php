@@ -7,7 +7,6 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\payfast_donation_block\Entity\PayfastDonations;
 use Drupal\payfast_donation_block\PayfastDonationsInterface;
 use Laminas\Diactoros\Response\JsonResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -84,7 +83,7 @@ class PayfastDonationBlockController extends ControllerBase {
     $request_data = $this->requestStack->getCurrentRequest()->request->all();
     $donation = $this->entityTypeManager
       ->getStorage('payfast_donations')
-      ->load( (int)$request_data['custom_str1']);
+      ->load((int) $request_data['custom_str1']);
 
     if ($donation instanceof PayfastDonationsInterface) {
       unset($request_data['signature']);
@@ -94,7 +93,7 @@ class PayfastDonationBlockController extends ControllerBase {
       $donation->save();
     }
 
-   return new JsonResponse(['It works']);
+    return new JsonResponse(['It works']);
   }
 
 }

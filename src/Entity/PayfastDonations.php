@@ -104,7 +104,7 @@ class PayfastDonations extends ContentEntityBase implements PayfastDonationsInte
 
     $fields['first_name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('First name'))
-      ->setDescription(t('User\'s first name.'))
+      ->setDescription(t("User's first name."))
       ->setRequired(FALSE)
       ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [
@@ -121,7 +121,7 @@ class PayfastDonations extends ContentEntityBase implements PayfastDonationsInte
 
     $fields['last_name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Last name'))
-      ->setDescription(t('User\'s last name.'))
+      ->setDescription(t("User's last name."))
       ->setRequired(FALSE)
       ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [
@@ -138,7 +138,7 @@ class PayfastDonations extends ContentEntityBase implements PayfastDonationsInte
 
     $fields['email'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Email'))
-      ->setDescription(t('User\'s email name.'))
+      ->setDescription(t("User's email name."))
       ->setRequired(TRUE)
       ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [

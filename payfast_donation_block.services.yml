@@ -1,6 +1,6 @@
 services:
   payfast_donation_block.event_subscriber:
     class: Drupal\payfast_donation_block\EventSubscriber\PayfastDonationBlockSubscriber
-    arguments: ['@logger.factory', '@state', '@current_route_match', '@config.factory']
+    arguments: ['@logger.factory', '@state', '@current_route_match', '@config.factory', '@messenger']
     tags:
       - { name: event_subscriber }

@@ -62,7 +62,6 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('payfast_donation_block.settings')->get('merchant_key'),
     ];
 
-
     $form['payfast_settings']['pass_phase'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Pass phrase'),
@@ -82,8 +81,8 @@ class SettingsForm extends ConfigFormBase {
       '#states' => [
         'visible' => [
           ':input[name="onsite_payment"]' => ['checked' => FALSE],
-        ]
-      ]
+        ],
+      ],
     ];
 
     $form['save_donation'] = [
