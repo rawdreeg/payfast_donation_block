@@ -130,6 +130,8 @@ class PayFastDonationBlockForm extends FormBase {
       $form['#attached']['library'][] = 'payfast_donation_block/payfast_donation_block';
     }
 
+    $form['#theme'] = 'payfast_donation_block_form';
+
     $form['message'] = [
       '#type' => 'markup',
       '#markup' => '<div id="payfast_do_onsite_payment"></div>',
