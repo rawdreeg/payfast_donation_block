@@ -72,10 +72,6 @@ class PayFastDonationBlockForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
 
-    if (!$this->payfastDonationBlockConfig) {
-      $this->payfastDonationBlockConfig = $this->config('payfast_donation_block.settings');
-    }
-
     $form['first_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('First name'),
@@ -188,9 +184,15 @@ class PayFastDonationBlockForm extends FormBase {
 
       if ($identifier !== NULL) {
         $notify_url = $data['notify_url'] ?? $data['return_url'];
+        $first_name = $data['first_name'] ?? "";
+        $last_name = $data['last_name'] ?? "";
+
         $payfast_modal = <<<EOF
 <script type="text/javascript">window.payfast_do_onsite_payment({
-            "uuid":"$identifier",
+            "item_name":"{$data['item_name']}",
+            "first_name":"{$first_name}",
+            "last_name":"{$last_name}",
+            "uuid":"{$identifier}",
             "return_url":"{$data['return_url']}",
             "cancel_url":"{$data['cancel_url']}",
             "notify_url":"{$notify_url}"
@@ -244,20 +246,6 @@ EOF;
    * @throws \PayFast\Exceptions\InvalidRequestException
    */
   private function preparePayfastData(FormStateInterface $form_state) {
-    if (!$this->payfastDonationBlockConfig) {
-      $this->payfastDonationBlockConfig = $this->config('payfast_donation_block.settings');
-    }
-
-    if (!$this->payfastClient) {
-      $this->payfastClient = new PayFastPayment(
-        [
-          'merchantId' => $this->payfastDonationBlockConfig->get('merchant_id'),
-          'merchantKey' => $this->payfastDonationBlockConfig->get('merchant_key'),
-          'passPhrase' => $this->payfastDonationBlockConfig->get('pass_phase'),
-          'testMode' => (bool) $this->payfastDonationBlockConfig->get('test_mode'),
-        ]
-      );
-    }
 
     $data = [
       'amount' => (float) $form_state->getValue('amount'),
@@ -297,8 +285,8 @@ EOF;
       $saved_donation = PayfastDonations::create(
           [
             'title' => $data['item_name'],
-            'first_name' => $form_state->getValue('first_name'),
-            'last_name' => $form_state->getValue('last_name'),
+            'name_first' => $form_state->getValue('first_name'),
+            'name_last' => $form_state->getValue('last_name'),
             'email' => $data['email_address'],
             'donation_amount' => $data['amount'],
             'payment_status' => 'pending',
